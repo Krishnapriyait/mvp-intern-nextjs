@@ -15,11 +15,6 @@ export default function Contact() {
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
           rel="stylesheet"
         />
-        <script
-          src="https://www.google.com/recaptcha/api.js"
-          async
-          defer
-        ></script>
       </Head>
 
       <style jsx global>{`
@@ -98,13 +93,6 @@ export default function Contact() {
         }
         .info p {
           margin: 5px 0;
-        }
-        iframe {
-          width: 100%;
-          height: 250px;
-          border: none;
-          border-radius: 12px;
-          margin-top: 15px;
         }
         .right-form {
           flex: 1;
@@ -210,14 +198,6 @@ export default function Contact() {
               <strong>Email Us:</strong> office@donaid.org
             </p>
           </div>
-
-          <h3>Our Location</h3>
-          <iframe
-            src="https://www.google.com/maps?q=No.6,+Dhanammal+Street,+Spurtank+Road,+Chetpet,+Chennai,+600031,+India&output=embed"
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          ></iframe>
         </div>
 
         <div className="right-form">
@@ -228,10 +208,6 @@ export default function Contact() {
             <input type="tel" placeholder="Phone*" required />
             <input type="text" placeholder="Address*" required />
             <textarea className="form-row" placeholder="Case Description*" required></textarea>
-            <div
-              className="g-recaptcha form-row"
-              data-sitekey="your_site_key_here"
-            ></div>
             <button type="submit" className="submit-btn">
               Submit Now
             </button>
