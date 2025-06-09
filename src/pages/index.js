@@ -1,9 +1,42 @@
 import Image from "next/image";
-
-
 import Head from "next/head";
+import Link from "next/link";
+import FoodDonationForm from "../components/fooddonationform";
+import DonationList from "../components/donationlist";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [donations, setDonations] = useState([]);
+
+  const defaultDonations = [
+    { id: 1, type: "Cooked Food", quantity: 10 },
+    { id: 2, type: "Packaged Food", quantity: 15 },
+    { id: 3, type: "Fruits & Vegetables", quantity: 8 },
+    { id: 4, type: "Dry Ration", quantity: 20 },
+    { id: 5, type: "Beverages & Water", quantity: 5 },
+    { id: 6, type: "Essentials", quantity: 12 },
+  ];
+
+  useEffect(() => {
+    setDonations(defaultDonations);
+  }, []);
+
+  const addDonation = (newDonation) => {
+    setDonations((prev) => {
+      const index = prev.findIndex(
+        (item) => item.type.toLowerCase() === newDonation.type.toLowerCase()
+      );
+
+      if (index !== -1) {
+        const updated = [...prev];
+        updated[index].quantity += newDonation.quantity;
+        return updated;
+      } else {
+        return [...prev, { ...newDonation, id: prev.length + 1 }];
+      }
+    });
+  };
+
   return (
     <>
       <Head>
@@ -76,6 +109,27 @@ export default function Home() {
           max-width: 600px;
           margin: auto;
         }
+        .section-card {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+          padding: 30px;
+          margin: 40px auto;
+          max-width: 750px;
+          line-height: 1.7;
+        }
+        .section-card h2 {
+          text-align: center;
+          font-size: 28px;
+          color: #6a994e;
+          margin-bottom: 15px;
+        }
+        .component-note {
+          font-size: 13px;
+          text-align: right;
+          color: #888;
+          margin-bottom: 10px;
+        }
         .about {
           background-color: #fff;
           padding: 50px 20px;
@@ -137,9 +191,9 @@ export default function Home() {
         <nav>
           <a href="#">Home</a>
           <a href="#about">About Us</a>
-          <a href="hunger.html">Hungers</a>
-          <a href="donor.html">Donors</a>
-          <a href="contact.html">Contact</a>
+          <Link href="/hunger">Hungers</Link>
+          <Link href="/donor">Donors</Link>
+          <Link href="/contact">Contact</Link>
         </nav>
       </header>
 
@@ -158,7 +212,23 @@ export default function Home() {
         </p>
       </section>
 
-      <section className="about" id="about">
+      <section className="donation-form-section">
+        <div className="section-card">
+          <div className="component-note">🌀 useState + useEffect used</div>
+          <h2>Donate Food Now</h2>
+          <FoodDonationForm onAddDonation={addDonation} />
+        </div>
+      </section>
+
+      <section className="donation-list-section">
+        <div className="section-card">
+          <div className="component-note">🌀 useState + useEffect used</div>
+          <h2>Recent Donations</h2>
+          <DonationList donations={donations} />
+        </div>
+      </section>
+
+            <section className="about" id="about">
         <h2>About Us</h2>
         <p>
           At <strong>DonAid</strong>, we believe that no one should go to bed
@@ -174,13 +244,11 @@ export default function Home() {
           meal, surplus from a function, or daily leftovers from a restaurant —
           every contribution matters.
         </p>
-
         <h3 style={{ color: "#6a994e" }}>Our Mission</h3>
         <p>
           To eliminate food waste and fight hunger by building a connected,
           efficient, and trustworthy network of donors and receivers.
         </p>
-
         <h3 style={{ color: "#6a994e" }}>What We Do</h3>
         <ul>
           <li>Connect Donors & Receivers: Match surplus food with those in need.</li>
@@ -188,7 +256,6 @@ export default function Home() {
           <li>Track Donations: Maintain transparency with donation history and status.</li>
           <li>Provide User-Friendly Access: Let anyone donate or request food with ease.</li>
         </ul>
-
         <p>
           <strong>Join us and be a part of the change. Your small act can feed someone’s day.</strong>
         </p>
@@ -226,20 +293,6 @@ export default function Home() {
       </section>
 
       <footer>&copy; 2025 DonAid. All rights reserved.</footer>
-
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-          window.addEventListener('load', () => {
-            if (window.location.hash) {
-              window.scrollTo(0, 0);
-              history.replaceState("", document.title, window.location.pathname + window.location.search);
-            }
-          });
-        `,
-        }}
-      />
     </>
   );
 }
-

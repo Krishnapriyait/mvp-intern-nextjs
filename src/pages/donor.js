@@ -1,11 +1,11 @@
 import Head from 'next/head';
 import Image from 'next/image';
-
+import Link from 'next/link';
 export default function Donor() {
   const donationItems = [
     { img: '/cooked.jpg', alt: 'Cooked Food', href: '/donation' },
     { img: '/packaged.jpg', alt: 'Packaged Food', href: '/donation' },
-    { img: '/fruits.jpg', alt: 'Fruits & Vegetables', href: '/dnation' }, // typo preserved as per original
+    { img: '/fruits.jpg', alt: 'Fruits & Vegetables', href: '/donation' },
     { img: '/ration.jpg', alt: 'Dry Ration', href: '/donation' },
     { img: '/beverages.jpg', alt: 'Beverages & Water', href: '/donation' },
     { img: '/essential.jpg', alt: 'Essentials', href: '/donation' },
@@ -160,9 +160,9 @@ export default function Donor() {
         <nav>
           <a href="/">Home</a>
           <a href="/#about">About Us</a>
-          <a href="/hunger">Hungers</a>
-          <a href="/donor">Donors</a>
-          <a href="/contact">Contact</a>
+          <Link href="/hunger">Hungers</Link>
+  	  <Link href="/donor">Donors</Link>
+  	  <Link href="/contact">Contact</Link>
         </nav>
       </header>
 

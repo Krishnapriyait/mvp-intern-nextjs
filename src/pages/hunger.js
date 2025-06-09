@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Head from 'next/head';
 import { useEffect } from 'react';
-
+import Link from 'next/link';
 export default function Hunger() {
   useEffect(() => {
     const form = document.getElementById('hungerRequestForm');
@@ -168,9 +168,9 @@ export default function Hunger() {
         <nav>
           <a href="/">Home</a>
           <a href="/#about">About Us</a>
-          <a href="/hunger">Hungers</a>
-          <a href="/donor">Donors</a>
-          <a href="/contact">Contact</a>
+          <Link href="/hunger">Hungers</Link>
+  	  <Link href="/donor">Donors</Link>
+  	  <Link href="/contact">Contact</Link>
         </nav>
       </header>
 
