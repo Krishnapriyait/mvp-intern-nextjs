@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [donations, setDonations] = useState([]);
+  const [aiReply, setAiReply] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   const defaultDonations = [
     { id: 1, type: "Cooked Food", quantity: 10 },
@@ -37,6 +39,31 @@ export default function Home() {
     });
   };
 
+  const handleAI = async (e) => {
+    e.preventDefault();
+    const msg = e.target.message.value.trim();
+    if (!msg) return;
+
+    setAiReply("Thinking...");
+    setAiLoading(true);
+
+    try {
+      const res = await fetch("/api/backendchat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messages: [{ role: "user", content: msg }] }),
+      });
+      const data = await res.json();
+      setAiReply(data.choices?.[0]?.message?.content || "No reply");
+    } catch (err) {
+      setAiReply("❌ Error: Failed to connect with AI.");
+    }
+
+    setAiLoading(false);
+  };
+
   return (
     <>
       <Head>
@@ -48,8 +75,8 @@ export default function Home() {
         />
       </Head>
 
-      <style jsx global>{`
-        html {
+      {/* Global styles */}
+      <style jsx global>{`html {
           scroll-behavior: smooth;
         }
         body {
@@ -197,10 +224,10 @@ export default function Home() {
         </nav>
       </header>
 
+      {/* Hero & sections */}
       <section className="video">
         <video controls autoPlay muted loop>
           <source src="/foodvideo.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
         </video>
       </section>
 
@@ -228,8 +255,9 @@ export default function Home() {
         </div>
       </section>
 
-            <section className="about" id="about">
-        <h2>About Us</h2>
+      {/* About section */}
+      <section className="about" id="about"> 
+	<h2>About Us</h2>
         <p>
           At <strong>DonAid</strong>, we believe that no one should go to bed
           hungry. We are a community-driven platform committed to reducing food
@@ -258,9 +286,10 @@ export default function Home() {
         </ul>
         <p>
           <strong>Join us and be a part of the change. Your small act can feed someone’s day.</strong>
-        </p>
-      </section>
+        </p>	
+    </section>
 
+      {/* Features section */}
       <section className="features" id="features">
         <div className="feature">
           <h3>Real-Time Donations</h3>
@@ -290,6 +319,60 @@ export default function Home() {
             timely pickups and deliveries.
           </p>
         </div>
+      </section>
+
+
+
+      {/* ✅ AI Assistant Section */}
+      <section className="section-card" id="ai-assistant">
+        <div className="component-note">🤖 AI Assistant</div>
+        <h2>Ask Our AI</h2>
+        <form onSubmit={handleAI}>
+          <textarea
+            name="message"
+            placeholder="Ask something like 'How to donate safely?'"
+            rows="4"
+            style={{
+              width: "100%",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              fontFamily: "inherit",
+              fontSize: "16px",
+              resize: "vertical",
+            }}
+          ></textarea>
+          <button
+            type="submit"
+            style={{
+              marginTop: "10px",
+              padding: "10px 20px",
+              fontSize: "16px",
+              backgroundColor: "#6a994e",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            Ask AI
+          </button>
+        </form>
+        {aiReply && (
+          <div
+            style={{
+              marginTop: "20px",
+              padding: "15px",
+              backgroundColor: "#f0f8f4",
+              borderRadius: "8px",
+              border: "1px solid #b7e4c7",
+              color: "#1a4d2e",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            <strong>AI:</strong> {aiReply}
+          </div>
+        )}
       </section>
 
       <footer>&copy; 2025 DonAid. All rights reserved.</footer>
