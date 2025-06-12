@@ -51,7 +51,7 @@ export default function Donation() {
     e.preventDefault();
     alert("Thank you for your generous donation! Your food parcel will help someone in need.");
 
-    const userDest = prompt("📍 Enter the destination location:");
+    const userDest = prompt("📍 Enter the destination location and on your location in mobile else you can't see the live location:");
     if (!userDest) return;
 
     setLoadingMap(true);
