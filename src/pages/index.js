@@ -1,14 +1,15 @@
 import Image from "next/image";
 import Head from "next/head";
 import Link from "next/link";
+import 'leaflet/dist/leaflet.css';
 import FoodDonationForm from "../components/fooddonationform";
 import DonationList from "../components/donationlist";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+const Map = dynamic(() => import("../components/Map"), { ssr: false });
 
 export default function Home() {
   const [donations, setDonations] = useState([]);
-  const [aiReply, setAiReply] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
 
   const defaultDonations = [
     { id: 1, type: "Cooked Food", quantity: 10 },
@@ -39,31 +40,6 @@ export default function Home() {
     });
   };
 
-  const handleAI = async (e) => {
-    e.preventDefault();
-    const msg = e.target.message.value.trim();
-    if (!msg) return;
-
-    setAiReply("Thinking...");
-    setAiLoading(true);
-
-    try {
-      const res = await fetch("/api/backendchat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ messages: [{ role: "user", content: msg }] }),
-      });
-      const data = await res.json();
-      setAiReply(data.choices?.[0]?.message?.content || "No reply");
-    } catch (err) {
-      setAiReply("❌ Error: Failed to connect with AI.");
-    }
-
-    setAiLoading(false);
-  };
-
   return (
     <>
       <Head>
@@ -75,8 +51,8 @@ export default function Home() {
         />
       </Head>
 
-      {/* Global styles */}
-      <style jsx global>{`html {
+      <style jsx global>{`
+        html {
           scroll-behavior: smooth;
         }
         body {
@@ -223,8 +199,7 @@ export default function Home() {
           <Link href="/contact">Contact</Link>
         </nav>
       </header>
-
-      {/* Hero & sections */}
+	
       <section className="video">
         <video controls autoPlay muted loop>
           <source src="/foodvideo.mp4" type="video/mp4" />
@@ -255,9 +230,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* About section */}
-      <section className="about" id="about"> 
-	<h2>About Us</h2>
+      <section className="section-card">
+        <h2>Live Delivery Location</h2>
+        <Map />
+      </section>
+
+      <section className="about" id="about">
+        <h2>About Us</h2>
         <p>
           At <strong>DonAid</strong>, we believe that no one should go to bed
           hungry. We are a community-driven platform committed to reducing food
@@ -269,8 +248,7 @@ export default function Home() {
         <p>
           Founded with compassion and powered by technology, DonAid aims to make
           the act of giving as seamless as possible. Whether it’s a home-cooked
-          meal, surplus from a function, or daily leftovers from a restaurant —
-          every contribution matters.
+          meal, surplus from a function, or daily leftovers from a restaurant — every contribution matters.
         </p>
         <h3 style={{ color: "#6a994e" }}>Our Mission</h3>
         <p>
@@ -284,95 +262,52 @@ export default function Home() {
           <li>Track Donations: Maintain transparency with donation history and status.</li>
           <li>Provide User-Friendly Access: Let anyone donate or request food with ease.</li>
         </ul>
-        <p>
-          <strong>Join us and be a part of the change. Your small act can feed someone’s day.</strong>
-        </p>	
-    </section>
+        <p><strong>Join us and be a part of the change. Your small act can feed someone’s day.</strong></p>
+      </section>
 
-      {/* Features section */}
       <section className="features" id="features">
         <div className="feature">
           <h3>Real-Time Donations</h3>
-          <p>
-            Donors can submit food details instantly and get matched with nearby
-            NGOs based on availability and need.
-          </p>
+          <p>Donors can submit food details instantly and get matched with nearby NGOs based on availability and need.</p>
         </div>
         <div className="feature">
           <h3>Smart Matching</h3>
-          <p>
-            Our intelligent system uses geolocation and capacity data to connect
-            the right donor with the right NGO.
-          </p>
+          <p>Our intelligent system uses geolocation and capacity data to connect the right donor with the right NGO.</p>
         </div>
         <div className="feature">
           <h3>Track Donations</h3>
-          <p>
-            Both donors and NGOs can view donation history, track statuses, and
-            generate reports for transparency.
-          </p>
+          <p>Both donors and NGOs can view donation history, track statuses, and generate reports for transparency.</p>
         </div>
         <div className="feature">
           <h3>Admin Panel</h3>
-          <p>
-            Admins can manage users, oversee donation statistics, and ensure
-            timely pickups and deliveries.
-          </p>
+          <p>Admins can manage users, oversee donation statistics, and ensure timely pickups and deliveries.</p>
         </div>
       </section>
 
-
-
-      {/* ✅ AI Assistant Section */}
-      <section className="section-card" id="ai-assistant">
-        <div className="component-note">🤖 AI Assistant</div>
-        <h2>Ask Our AI</h2>
-        <form onSubmit={handleAI}>
-          <textarea
-            name="message"
-            placeholder="Ask something like 'How to donate safely?'"
-            rows="4"
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              fontFamily: "inherit",
-              fontSize: "16px",
-              resize: "vertical",
-            }}
-          ></textarea>
+      {/* 💬 New AI Chatbot Navigation Button */}
+      <section className="section-card" style={{ textAlign: "center" }}>
+        <h2>Need Help or Have Questions?</h2>
+        <p>Use our AI Assistant to get answers instantly!</p>
+        <Link href="/chatbot">
           <button
-            type="submit"
             style={{
               marginTop: "10px",
-              padding: "10px 20px",
-              fontSize: "16px",
-              backgroundColor: "#6a994e",
+              padding: "12px 24px",
+              fontSize: "18px",
+              backgroundColor: "#386641",
               color: "#fff",
               border: "none",
-              borderRadius: "6px",
+              borderRadius: "50px",
               cursor: "pointer",
+              transition: "transform 0.3s, background-color 0.3s",
+              boxShadow: "0 10px 20px rgba(56, 102, 65, 0.2)",
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
           >
-            Ask AI
+            🚀 Go to My AI Chatbot
           </button>
-        </form>
-        {aiReply && (
-          <div
-            style={{
-              marginTop: "20px",
-              padding: "15px",
-              backgroundColor: "#f0f8f4",
-              borderRadius: "8px",
-              border: "1px solid #b7e4c7",
-              color: "#1a4d2e",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            <strong>AI:</strong> {aiReply}
-          </div>
-        )}
+        </Link>
       </section>
 
       <footer>&copy; 2025 DonAid. All rights reserved.</footer>

@@ -2,6 +2,13 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import dynamic from "next/dynamic";
+
+// Lazy load RouteMap to prevent SSR issues
+const RouteMap = dynamic(() => import("../components/routemap"), {
+  ssr: false,
+  loading: () => <p style={{ color: "#007bff", fontWeight: "bold" }}>🗺️ Loading map preview...</p>,
+});
 
 export default function Donation() {
   const [formData, setFormData] = useState({
@@ -15,15 +22,79 @@ export default function Donation() {
     totalAmount: "",
   });
 
+  const [destination, setDestination] = useState("");
+  const [startCoords, setStartCoords] = useState(null);
+  const [destCoords, setDestCoords] = useState(null);
+  const [loadingMap, setLoadingMap] = useState(false);
+  const [locationError, setLocationError] = useState("");
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const geocodeLocation = async (address) => {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+    const data = await res.json();
+    if (data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+    return null;
+  };
+
+  const reverseGeocode = async (lat, lng) => {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+    const data = await res.json();
+    return data.display_name || "";
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert(
-      "Thank you for your generous donation! Your food parcel will help someone in need."
-    );
+    alert("Thank you for your generous donation! Your food parcel will help someone in need.");
+
+    const userDest = prompt("📍 Enter the destination location:");
+    if (!userDest) return;
+
+    setLoadingMap(true);
+    setDestination(userDest);
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude, accuracy } = position.coords;
+
+          if (accuracy > 1000) {
+            const manualStart = prompt("⚠️ Location seems inaccurate. Enter your current location:");
+            if (manualStart) {
+              const manualLoc = await geocodeLocation(manualStart);
+              if (manualLoc) {
+                setStartCoords([manualLoc.lat, manualLoc.lng]);
+              } else {
+                setLocationError("⚠️ Could not find your location.");
+              }
+            }
+          } else {
+            setStartCoords([latitude, longitude]);
+          }
+
+          const destLoc = await geocodeLocation(userDest);
+          if (destLoc) {
+            setDestCoords([destLoc.lat, destLoc.lng]);
+          } else {
+            alert("⚠️ Destination not found!");
+          }
+
+          setLoadingMap(false);
+        },
+        () => {
+          setLocationError("❌ Location access denied or unavailable.");
+          setLoadingMap(false);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      setLocationError("❌ Geolocation not supported by your browser.");
+      setLoadingMap(false);
+    }
   };
 
   return (
@@ -31,11 +102,9 @@ export default function Donation() {
       <Head>
         <title>DonAid - Food Donation</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
-          rel="stylesheet"
-        />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
       </Head>
+
       <style jsx global>{`
         body {
           margin: 0;
@@ -182,12 +251,26 @@ export default function Donation() {
             <input name="totalAmount" value={formData.totalAmount} onChange={handleChange} placeholder="Total Amount*" required />
             <button type="submit">DONATE NOW</button>
           </form>
+
+          {locationError && <p style={{ color: "red" }}>{locationError}</p>}
+
+          {loadingMap && (
+            <p style={{ color: "green", fontWeight: "bold", marginTop: "10px" }}>
+              🛰️ Fetching live location & generating route...
+            </p>
+          )}
+
+          {startCoords && destCoords && !loadingMap && (
+            <>
+              <h3 style={{ marginTop: "20px", color: "#007bff" }}>🗺️ Live Route Preview</h3>
+              <RouteMap start={startCoords} end={destCoords} />
+            </>
+          )}
         </div>
 
         <div className="recommend-box">
           <h2>Recommended Causes</h2>
-          {[
-            { img: "/water.jpg", text: "Water Bottles ₹20 / Person" },
+          {[{ img: "/water.jpg", text: "Water Bottles ₹20 / Person" },
             { img: "/snack.jpg", text: "Snacks Pack ₹50 / Kit" },
             { img: "/familykit.jpg", text: "Family Food Kit ₹250 / Family" },
             { img: "/breakfast.jpg", text: "Breakfast ₹30 / Person" },

@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Only POST requests allowed' });
   }
 
-  const { messages } = req.body; // ✅ matches frontend structure: messages is an array
+  const { messages } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Invalid message format' });
@@ -17,13 +17,13 @@ export default async function handler(req, res) {
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'openai/gpt-3.5-turbo', // use any OpenRouter-supported model
-        messages: messages, // ⬅️ keep structure intact
+        model: 'openai/gpt-3.5-turbo', 
+        messages: messages,
       },
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, // 🔐 keep your API key in .env
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
           'HTTP-Referer': 'http://localhost:3000',
           'X-Title': 'DonAid-AI-Assistant',
         },
