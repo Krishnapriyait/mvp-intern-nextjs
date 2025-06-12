@@ -5,7 +5,6 @@ import 'leaflet/dist/leaflet.css';
 import FoodDonationForm from "../components/fooddonationform";
 import DonationList from "../components/donationlist";
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 
 export default function Home() {
   const [donations, setDonations] = useState([]);
@@ -227,11 +226,6 @@ export default function Home() {
           <h2>Recent Donations</h2>
           <DonationList donations={donations} />
         </div>
-      </section>
-
-      <section className="section-card">
-        <h2>Live Delivery Location</h2>
-        <Map />
       </section>
 
       <section className="about" id="about">
