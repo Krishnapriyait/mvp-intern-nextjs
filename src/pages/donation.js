@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 
-// Lazy load RouteMap to prevent SSR issues
+// ✅ Firebase Firestore imports
+import { db } from "../lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+
 const RouteMap = dynamic(() => import("../components/routemap"), {
   ssr: false,
   loading: () => <p style={{ color: "#007bff", fontWeight: "bold" }}>🗺️ Loading map preview...</p>,
@@ -27,6 +30,7 @@ export default function Donation() {
   const [destCoords, setDestCoords] = useState(null);
   const [loadingMap, setLoadingMap] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ New state
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,59 +45,74 @@ export default function Donation() {
     return null;
   };
 
-  const reverseGeocode = async (lat, lng) => {
-    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-    const data = await res.json();
-    return data.display_name || "";
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Thank you for your generous donation! Your food parcel will help someone in need.");
 
-    const userDest = prompt("📍 Enter the destination location and on your location in mobile else you can't see the live location:");
-    if (!userDest) return;
+    if (isSubmitting) return; // ✅ Prevent double-click
+    setIsSubmitting(true);
 
-    setLoadingMap(true);
-    setDestination(userDest);
+    try {
+      await addDoc(collection(db, "donations"), {
+        ...formData,
+        createdAt: serverTimestamp(),
+      });
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude, accuracy } = position.coords;
+      alert("Thank you for your generous donation! Your food parcel will help someone in need.");
 
-          if (accuracy > 1000) {
-            const manualStart = prompt("⚠️ Location seems inaccurate. Enter your current location:");
-            if (manualStart) {
-              const manualLoc = await geocodeLocation(manualStart);
-              if (manualLoc) {
-                setStartCoords([manualLoc.lat, manualLoc.lng]);
-              } else {
-                setLocationError("⚠️ Could not find your location.");
+      const userDest = prompt("📍 Enter the destination location:");
+      if (!userDest) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      setLoadingMap(true);
+      setDestination(userDest);
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude, accuracy } = position.coords;
+
+            if (accuracy > 1000) {
+              const manualStart = prompt("⚠️ Location seems inaccurate. Enter your current location:");
+              if (manualStart) {
+                const manualLoc = await geocodeLocation(manualStart);
+                if (manualLoc) {
+                  setStartCoords([manualLoc.lat, manualLoc.lng]);
+                } else {
+                  setLocationError("⚠️ Could not find your location.");
+                }
               }
+            } else {
+              setStartCoords([latitude, longitude]);
             }
-          } else {
-            setStartCoords([latitude, longitude]);
-          }
 
-          const destLoc = await geocodeLocation(userDest);
-          if (destLoc) {
-            setDestCoords([destLoc.lat, destLoc.lng]);
-          } else {
-            alert("⚠️ Destination not found!");
-          }
+            const destLoc = await geocodeLocation(userDest);
+            if (destLoc) {
+              setDestCoords([destLoc.lat, destLoc.lng]);
+            } else {
+              alert("⚠️ Destination not found!");
+            }
 
-          setLoadingMap(false);
-        },
-        () => {
-          setLocationError("❌ Location access denied or unavailable.");
-          setLoadingMap(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    } else {
-      setLocationError("❌ Geolocation not supported by your browser.");
-      setLoadingMap(false);
+            setLoadingMap(false);
+            setIsSubmitting(false); // ✅ Reset
+          },
+          () => {
+            setLocationError("❌ Location access denied or unavailable.");
+            setLoadingMap(false);
+            setIsSubmitting(false); // ✅ Reset
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      } else {
+        setLocationError("❌ Geolocation not supported by your browser.");
+        setLoadingMap(false);
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      alert("❌ Failed to save donation. Please try again.");
+      console.error("Firestore Error:", err);
+      setIsSubmitting(false);
     }
   };
 
@@ -188,7 +207,11 @@ export default function Donation() {
           margin-top: 10px;
           cursor: pointer;
         }
-        button:hover {
+        button[disabled] {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+        button:hover:enabled {
           background-color: #1a78c2;
         }
         .recommend-item {
@@ -249,7 +272,9 @@ export default function Donation() {
             <input name="parcelName" value={formData.parcelName} onChange={handleChange} placeholder="Name of Parcel*" required />
             <input name="count" type="number" value={formData.count} onChange={handleChange} placeholder="Count*" required />
             <input name="totalAmount" value={formData.totalAmount} onChange={handleChange} placeholder="Total Amount*" required />
-            <button type="submit">DONATE NOW</button>
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "⏳ Please wait..." : "DONATE NOW"}
+            </button>
           </form>
 
           {locationError && <p style={{ color: "red" }}>{locationError}</p>}

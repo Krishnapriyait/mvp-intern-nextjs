@@ -1,28 +1,60 @@
 import Image from 'next/image';
 import Head from 'next/head';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
 export default function Hunger() {
-  useEffect(() => {
-    const form = document.getElementById('hungerRequestForm');
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      alert(
-        'Thank you for submitting your request. Our team will get in touch with you shortly.'
-      );
-      form.reset();
-    });
-  }, []);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    location: '',
+    details: ''
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      await addDoc(collection(db, 'hungerRequests'), {
+        ...formData,
+        createdAt: serverTimestamp()
+      });
+
+      alert('✅ Thank you for submitting your request. Our team will get in touch with you shortly.');
+
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        location: '',
+        details: ''
+      });
+    } catch (error) {
+      alert('❌ Failed to submit your request. Please try again.');
+      console.error('Error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <>
       <Head>
         <title>DonAid - Hungers</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
-          rel="stylesheet"
-        />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
       </Head>
 
       <style jsx global>{`
@@ -146,8 +178,12 @@ export default function Hunger() {
           cursor: pointer;
           transition: background-color 0.3s ease;
         }
-        button:hover {
+        button:hover:enabled {
           background-color: #386641;
+        }
+        button:disabled {
+          background-color: #a4a4a4;
+          cursor: not-allowed;
         }
 
         footer {
@@ -169,31 +205,33 @@ export default function Hunger() {
           <a href="/">Home</a>
           <a href="/#about">About Us</a>
           <Link href="/hunger">Hungers</Link>
-  	  <Link href="/donor">Donors</Link>
-  	  <Link href="/contact">Contact</Link>
+          <Link href="/donor">Donors</Link>
+          <Link href="/contact">Contact</Link>
         </nav>
       </header>
 
       <main>
         <h2>Request Food Assistance</h2>
         <p>
-          If you or someone you know is in need of food assistance, please fill out the form below. We
-          will connect you with nearby donors and NGOs to provide timely help.
+          If you or someone you know is in need of food assistance, please fill out the form below.
+          We will connect you with nearby donors and NGOs to provide timely help.
         </p>
 
         <div className="form-container">
-          <form id="hungerRequestForm">
+          <form onSubmit={handleSubmit}>
             <label htmlFor="name">Full Name *</label>
-            <input type="text" id="name" name="name" required placeholder="Your full name" />
+            <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} required placeholder="Your full name" />
 
             <label htmlFor="email">Email Address *</label>
-            <input type="email" id="email" name="email" required placeholder="Your email address" />
+            <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required placeholder="Your email address" />
 
             <label htmlFor="phone">Phone Number *</label>
             <input
               type="tel"
               id="phone"
               name="phone"
+              value={formData.phone}
+              onChange={handleChange}
               required
               placeholder="Your phone number"
               pattern="[0-9]{10}"
@@ -201,12 +239,14 @@ export default function Hunger() {
             />
 
             <label htmlFor="location">Location *</label>
-            <input type="text" id="location" name="location" required placeholder="Your area or city" />
+            <input type="text" id="location" name="location" value={formData.location} onChange={handleChange} required placeholder="Your area or city" />
 
             <label htmlFor="details">Additional Details</label>
-            <textarea id="details" name="details" placeholder="Describe your needs or situation"></textarea>
+            <textarea id="details" name="details" value={formData.details} onChange={handleChange} placeholder="Describe your needs or situation"></textarea>
 
-            <button type="submit">Submit Request</button>
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "⏳ Submitting..." : "Submit Request"}
+            </button>
           </form>
         </div>
       </main>
